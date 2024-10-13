@@ -11,7 +11,9 @@ import (
 
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/config"
 	internalhttp "github.com/hizagi/fullstack-challenge-jobsity/backend/internal/http"
+	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/service"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/storage"
+	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/storage/repository"
 )
 
 func main() {
@@ -31,12 +33,16 @@ func main() {
 		log.Fatalf("failure loading database configuration: %s", err)
 	}
 
-	_, err = storage.NewMongoStorage(ctx, dbConfig)
+	mongoStorage, err := storage.NewMongoStorage(ctx, dbConfig)
 	if err != nil {
 		log.Fatalf("failure initializing mongodb storage: %s", err)
 	}
 
-	httpHandler := internalhttp.NewTaskHandler()
+	taskRepository := repository.NewTaskRepository(mongoStorage)
+
+	taskService := service.NewTaskService(taskRepository)
+
+	httpHandler := internalhttp.NewTaskHandler(taskService)
 
 	srv := &http.Server{
 		ReadTimeout:  httpServerConfig.ReadTimeout,

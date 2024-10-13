@@ -1,30 +1,21 @@
 package domain
 
 import (
-	"time"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/hizagi/fullstack-challenge-jobsity/backend/api/generated"
 )
 
-const (
-	StatusCompleted  = "completed"
-	StatusIncomplete = "incomplete"
-	StatusInProgress = "in-progress"
-)
-
-type Task struct {
-	ID        string    `json:"id"`
-	Title     string    `json:"title"`
-	Content   string    `json:"content"`
-	Status    string    `json:"status"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+func ValidateCreateTask(createTask *generated.CreateTask) error {
+	return validation.ValidateStruct(
+		createTask,
+		validation.Field(&createTask.Title, validation.Required.Error("Title is required")),
+	)
 }
 
-func (t *Task) Validate() error {
+func ValidateUpdateTask(updateTask *generated.UpdateTask) error {
 	return validation.ValidateStruct(
-		t,
-		validation.Field(&t.Title, validation.Required.Error("Title is required")),
-		validation.Field(&t.Status, validation.Required.Error("Status is required"), validation.In(StatusCompleted, StatusIncomplete, StatusInProgress).Error("Invalid status")),
+		updateTask,
+		validation.Field(&updateTask.Title, validation.Required.Error("Title is required")),
+		validation.Field(&updateTask.Status, validation.Required.Error("Status is required"), validation.In(generated.TaskStatusComplete, generated.TaskStatusIncomplete, generated.TaskStatusInProgress).Error("Invalid status")),
 	)
 }

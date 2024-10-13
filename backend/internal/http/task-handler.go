@@ -1,44 +1,123 @@
 package http
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/api/generated"
+	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/domain"
 )
 
-type TaskHandler struct {
+type taskService interface {
+	CreateTask(ctx context.Context, createTask generated.CreateTask) (string, error)
+	UpdateTask(ctx context.Context, id string, updateTask generated.UpdateTask) error
+	DeleteTask(ctx context.Context, id string) error
+	GetTask(ctx context.Context, id string) (*generated.Task, error)
+	ListTasks(ctx context.Context, cursor *string, limit *int64) ([]generated.Task, string, error)
 }
 
-func NewTaskHandler() http.Handler {
+type TaskHandler struct {
+	taskService taskService
+}
+
+func NewTaskHandler(taskService taskService) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recoverer)
 
-	taskHandler := &TaskHandler{}
+	taskHandler := &TaskHandler{
+		taskService: taskService,
+	}
 
 	return generated.Handler(taskHandler)
 }
 
 func (h *TaskHandler) ListTasks(w http.ResponseWriter, r *http.Request, params generated.ListTasksParams) {
-	log.Printf("ListTasks called, params: %v\n", params)
+	tasks, nextCursor, err := h.taskService.ListTasks(r.Context(), params.Cursor, params.Limit)
+	if err != nil {
+		log.Printf("Error creating task: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(generated.ListTasksResponse{
+		Tasks:      tasks,
+		NextCursor: nextCursor,
+	})
 }
 
 func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
-	log.Println("CreateTask called")
+	var req generated.CreateTask
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := domain.ValidateCreateTask(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	taskID, err := h.taskService.CreateTask(r.Context(), req)
+	if err != nil {
+		log.Printf("Error creating task: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Location", fmt.Sprintf("/tasks/%s", taskID))
+	w.WriteHeader(http.StatusCreated)
 }
 
-func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
-	// Add logic for updating a task
-	log.Println("UpdateTask called")
+func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request, id string) {
+	var req generated.UpdateTask
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := domain.ValidateUpdateTask(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := h.taskService.UpdateTask(r.Context(), id, req)
+	if err != nil {
+		log.Printf("Error creating task: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request, id string) {
-	log.Println("DeleteTask called for ID:", id)
+	err := h.taskService.DeleteTask(r.Context(), id)
+	if err != nil {
+		log.Printf("Error creating task: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request, id string) {
-	log.Println("GetTask called for ID:", id)
+	task, err := h.taskService.GetTask(r.Context(), id)
+	if err != nil {
+		log.Printf("Error creating task: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(task)
 }

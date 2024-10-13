@@ -19,15 +19,15 @@ type ServerInterface interface {
 	// Create a new task
 	// (POST /tasks)
 	CreateTask(w http.ResponseWriter, r *http.Request)
-	// Update an existing task
-	// (PUT /tasks)
-	UpdateTask(w http.ResponseWriter, r *http.Request)
 	// Delete a task
 	// (DELETE /tasks/{id})
 	DeleteTask(w http.ResponseWriter, r *http.Request, id string)
 	// Get a task by ID
 	// (GET /tasks/{id})
 	GetTask(w http.ResponseWriter, r *http.Request, id string)
+	// Update an existing task
+	// (PATCH /tasks/{id})
+	UpdateTask(w http.ResponseWriter, r *http.Request, id string)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -46,12 +46,6 @@ func (_ Unimplemented) CreateTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Update an existing task
-// (PUT /tasks)
-func (_ Unimplemented) UpdateTask(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
 // Delete a task
 // (DELETE /tasks/{id})
 func (_ Unimplemented) DeleteTask(w http.ResponseWriter, r *http.Request, id string) {
@@ -61,6 +55,12 @@ func (_ Unimplemented) DeleteTask(w http.ResponseWriter, r *http.Request, id str
 // Get a task by ID
 // (GET /tasks/{id})
 func (_ Unimplemented) GetTask(w http.ResponseWriter, r *http.Request, id string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update an existing task
+// (PATCH /tasks/{id})
+func (_ Unimplemented) UpdateTask(w http.ResponseWriter, r *http.Request, id string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -122,20 +122,6 @@ func (siw *ServerInterfaceWrapper) CreateTask(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
-// UpdateTask operation middleware
-func (siw *ServerInterfaceWrapper) UpdateTask(w http.ResponseWriter, r *http.Request) {
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateTask(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
 // DeleteTask operation middleware
 func (siw *ServerInterfaceWrapper) DeleteTask(w http.ResponseWriter, r *http.Request) {
 
@@ -177,6 +163,31 @@ func (siw *ServerInterfaceWrapper) GetTask(w http.ResponseWriter, r *http.Reques
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetTask(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTask operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTask(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTask(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -306,13 +317,13 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/tasks", wrapper.CreateTask)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/tasks", wrapper.UpdateTask)
-	})
-	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/tasks/{id}", wrapper.DeleteTask)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/tasks/{id}", wrapper.GetTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/tasks/{id}", wrapper.UpdateTask)
 	})
 
 	return r

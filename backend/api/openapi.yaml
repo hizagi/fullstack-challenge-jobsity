@@ -15,6 +15,7 @@ paths:
           description: Maximum number of tasks to return
           schema:
             type: integer
+            x-go-type: int64
         - name: cursor
           in: query
           required: false
@@ -27,15 +28,8 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  tasks:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Task"
-                  nextCursor:
-                    type: string
-                    description: Cursor for the next page of tasks
+                $ref: "#/components/schemas/ListTasksResponse"
+
     post:
       summary: Create a new task
       operationId: createTask
@@ -45,23 +39,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: "#/components/schemas/CreateTask"
       responses:
         "201":
           description: Task created successfully
-    put:
-      summary: Update an existing task
-      operationId: updateTask
-      requestBody:
-        description: Task object to update
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Task"
-      responses:
-        "200":
-          description: Task updated successfully
   /tasks/{id}:
     get:
       summary: Get a task by ID
@@ -82,6 +63,26 @@ paths:
                 $ref: "#/components/schemas/Task"
         "404":
           description: Task not found
+    patch:
+      summary: Update an existing task
+      operationId: updateTask
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the task to update
+          schema:
+            type: string
+      requestBody:
+        description: Task object to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTask"
+      responses:
+        "204":
+          description: Task updated successfully
     delete:
       summary: Delete a task
       operationId: deleteTask
@@ -98,7 +99,17 @@ paths:
 
 components:
   schemas:
-    Task:
+    CreateTask:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          x-go-type-skip-optional-pointer: true
+          type: string
+      required:
+        - title
+    UpdateTask:
       type: object
       properties:
         title:
@@ -108,3 +119,39 @@ components:
           enum: [complete, incomplete, in-progress]
         content:
           type: string
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the task
+          example: "60c5f6e8d7f68839db5fa423"
+          x-go-name: ID
+        title:
+          type: string
+        status:
+          type: string
+          enum: [complete, incomplete, in-progress]
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          description: Task creation time
+        updatedAt:
+          type: string
+          format: date-time
+          description: Task update time
+    ListTasksResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+        nextCursor:
+          type: string
+          description: Cursor for the next page of tasks
+      required:
+        - tasks
+        - nextCursor

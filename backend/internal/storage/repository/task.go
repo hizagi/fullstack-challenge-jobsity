@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/domain"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/storage"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/storage/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,12 +18,12 @@ type TaskRepository struct {
 	mongoCollection *mongo.Collection
 }
 
-func NewTaskRepository(mongoStorage storage.MongoStorage) *TaskRepository {
+func NewTaskRepository(mongoStorage *storage.MongoStorage) *TaskRepository {
 	return &TaskRepository{mongoCollection: mongoStorage.GetDatabase().Collection(taskCollection)}
 }
 
-func (r *TaskRepository) CreateTask(ctx context.Context, task domain.Task) (string, error) {
-	result, err := r.mongoCollection.InsertOne(ctx, model.FromDomain(task))
+func (r *TaskRepository) CreateTask(ctx context.Context, task model.Task) (string, error) {
+	result, err := r.mongoCollection.InsertOne(ctx, task)
 	if err != nil {
 		return "", err
 	}
@@ -36,43 +35,42 @@ func (r *TaskRepository) CreateTask(ctx context.Context, task domain.Task) (stri
 	return "", fmt.Errorf("unable to convert inserted ID: %v", result.InsertedID)
 }
 
-func (r *TaskRepository) UpdateTask(ctx context.Context, id string, taskUpdate domain.TaskUpdate) (string, error) {
+func (r *TaskRepository) UpdateTask(ctx context.Context, id string, setMap primitive.M) error {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return "", fmt.Errorf("invalid objectid: %w", err)
+		return fmt.Errorf("invalid objectid: %w", err)
 	}
 
-	result, err := r.mongoCollection.UpdateByID(ctx, objectID, model.SetFromDomain(taskUpdate))
+	result, err := r.mongoCollection.UpdateByID(ctx, objectID, setMap)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	if upsertedID, ok := result.UpsertedID.(primitive.ObjectID); ok {
-		return upsertedID.Hex(), nil
+	if result.UpsertedCount == 1 {
+		return nil
 	}
 
-	return "", fmt.Errorf("unable to convert inserted ID: %v", result.UpsertedID)
+	return fmt.Errorf("unable to update ID: %s", id)
 }
 
-func (r *TaskRepository) DeleteTask(ctx context.Context, id string) (string, error) {
+func (r *TaskRepository) DeleteTask(ctx context.Context, id string) error {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return "", fmt.Errorf("invalid objectid: %w", err)
+		return fmt.Errorf("invalid objectid: %w", err)
 	}
-
 	result, err := r.mongoCollection.DeleteOne(ctx, bson.M{"_id": objectID})
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	if result.DeletedCount == 1 {
-		return id, nil
+		return nil
 	}
 
-	return "", fmt.Errorf("unable to delete ID: %s", id)
+	return fmt.Errorf("unable to delete ID: %s", id)
 }
 
-func (r *TaskRepository) GetTask(ctx context.Context, id string) (*domain.Task, error) {
+func (r *TaskRepository) GetTask(ctx context.Context, id string) (*model.Task, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, fmt.Errorf("invalid objectid: %w", err)
@@ -88,36 +86,30 @@ func (r *TaskRepository) GetTask(ctx context.Context, id string) (*domain.Task, 
 		return nil, fmt.Errorf("failed to find task: %w", err)
 	}
 
-	domainTask := task.ToDomain()
-
-	return &domainTask, nil
+	return &task, nil
 }
 
-func (r *TaskRepository) ListTasks(ctx context.Context, cursor string, limit int64) ([]domain.Task, string, error) {
-	var tasks model.TaskCollection
+func (r *TaskRepository) ListTasks(ctx context.Context, cursor string, limit int64) ([]model.Task, string, error) {
+	var tasks []model.Task
 
 	filter := bson.M{}
 	if cursor != "" {
-		// Convert the cursor to ObjectID
 		objectID, err := primitive.ObjectIDFromHex(cursor)
 		if err != nil {
 			return nil, "", fmt.Errorf("invalid cursor: %w", err)
 		}
-		// Only fetch tasks with _id greater than the cursor
+
 		filter["_id"] = bson.M{"$gt": objectID}
 	}
 
-	// Define find options with a limit
-	findOptions := options.Find().SetLimit(limit).SetSort(bson.M{"_id": 1}) // Ascending order by _id
+	findOptions := options.Find().SetLimit(limit).SetSort(bson.M{"_id": 1})
 
-	// Find tasks
 	cursorMongo, err := r.mongoCollection.Find(ctx, filter, findOptions)
 	if err != nil {
 		return nil, "", err
 	}
 	defer cursorMongo.Close(ctx)
 
-	// Iterate through the cursor and decode each task into the result array
 	var lastTaskID primitive.ObjectID
 	for cursorMongo.Next(ctx) {
 		var task model.Task
@@ -126,22 +118,17 @@ func (r *TaskRepository) ListTasks(ctx context.Context, cursor string, limit int
 			return nil, "", err
 		}
 		tasks = append(tasks, task)
-		lastTaskID = task.ID // Capture the last task's ID for the next cursor
+		lastTaskID = task.ID
 	}
 
-	// Check for cursor errors
 	if err := cursorMongo.Err(); err != nil {
 		return nil, "", err
 	}
 
-	// If there are no results, return empty list and no next cursor
 	if len(tasks) == 0 {
 		return nil, "", nil
 	}
 
-	// Convert lastTaskID to hex string for the next cursor
 	nextCursor := lastTaskID.Hex()
-
-	// Return the list of tasks and the next cursor
-	return tasks.ToDomain(), nextCursor, nil
+	return tasks, nextCursor, nil
 }

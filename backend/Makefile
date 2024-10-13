@@ -16,7 +16,7 @@ docker-build:
 docker-run:
 	docker run -p 8080:8080 myapp
 
-clean:
+clean-spec:
 	@echo "Cleaning generated files..."
 	rm -rf $(GENERATED_DIR)
 
@@ -28,6 +28,20 @@ generate:
 
 install-and-generate: install generate
 
-clean-install-generate: clean install-and-generate
+clean-install-generate: clean-spec install-and-generate
 
-.PHONY: run lint build docker-build docker-run clean install generate install-and-generate clean-install-generate
+up:
+	docker-compose up -d
+
+down:
+	docker-compose down
+
+logs:
+	@echo "Displaying logs for Docker Compose services..."
+	docker-compose logs -f
+
+clean-container:
+	@echo "Removing containers, and volumes..."
+	docker-compose down -v
+
+.PHONY: run lint build docker-build docker-run clean-spec install generate install-and-generate clean-install-generate up down logs clean-container
