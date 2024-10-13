@@ -33,6 +33,11 @@ func main() {
 		log.Fatalf("failure loading database configuration: %s", err)
 	}
 
+	authConfig, err := serviceConfig.AuthConfig()
+	if err != nil {
+		log.Fatalf("failure loading auth configuration: %s", err)
+	}
+
 	mongoStorage, err := storage.NewMongoStorage(ctx, dbConfig)
 	if err != nil {
 		log.Fatalf("failure initializing mongodb storage: %s", err)
@@ -42,7 +47,9 @@ func main() {
 
 	taskService := service.NewTaskService(taskRepository)
 
-	httpHandler := internalhttp.NewTaskHandler(taskService)
+	authMiddleware := internalhttp.APIKeyAuthMiddleware(authConfig.APIKey)
+
+	httpHandler := internalhttp.NewTaskHandler(taskService, authMiddleware)
 
 	srv := &http.Server{
 		ReadTimeout:  httpServerConfig.ReadTimeout,

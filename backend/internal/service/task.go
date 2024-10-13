@@ -51,6 +51,7 @@ func (s *TaskService) UpdateTask(ctx context.Context, id string, updateTask gene
 	if updateTask.Status != nil {
 		update["status"] = *updateTask.Status
 	}
+	update["updateAt"] = time.Now()
 
 	setMap := map[string]interface{}{"$set": update}
 

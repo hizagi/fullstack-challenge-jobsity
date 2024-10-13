@@ -11,3 +11,6 @@ db:
   database: "tasks_db"
   timeout: 10s
   maxPoolSize: 100
+
+auth:
+  apiKey: 1234567891011

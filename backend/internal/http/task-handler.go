@@ -25,22 +25,26 @@ type TaskHandler struct {
 	taskService taskService
 }
 
-func NewTaskHandler(taskService taskService) http.Handler {
+func NewTaskHandler(taskService taskService, middlewares ...func(http.Handler) http.Handler) http.Handler {
 	r := chi.NewRouter()
 
-	r.Use(middleware.Recoverer)
+	middlewares = append(middlewares, middleware.Recoverer)
+
+	r.Use(middlewares...)
 
 	taskHandler := &TaskHandler{
 		taskService: taskService,
 	}
 
-	return generated.Handler(taskHandler)
+	return generated.HandlerWithOptions(taskHandler, generated.ChiServerOptions{
+		BaseRouter: r,
+	})
 }
 
 func (h *TaskHandler) ListTasks(w http.ResponseWriter, r *http.Request, params generated.ListTasksParams) {
 	tasks, nextCursor, err := h.taskService.ListTasks(r.Context(), params.Cursor, params.Limit)
 	if err != nil {
-		log.Printf("Error creating task: %v", err)
+		log.Printf("Error listing tasks: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

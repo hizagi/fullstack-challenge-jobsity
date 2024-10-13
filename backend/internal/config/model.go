@@ -15,6 +15,7 @@ const (
 type ServiceConfig struct {
 	Server *HTTPServer `koanf:"server"`
 	DB     *DB         `koanf:"db"`
+	Auth   *Auth       `koanf:"auth"`
 }
 
 type HTTPServer struct {
@@ -31,6 +32,10 @@ type DB struct {
 	Database    string        `koanf:"database"`
 	Timeout     time.Duration `koanf:"timeout"`
 	MaxPoolSize uint64        `koanf:"maxPoolSize"`
+}
+
+type Auth struct {
+	APIKey string `koanf:"apiKey"`
 }
 
 func (c *ServiceConfig) HTTPServerConfig() HTTPServer {
@@ -52,4 +57,12 @@ func (c *ServiceConfig) DBConfig() (DB, error) {
 	}
 
 	return *c.DB, nil
+}
+
+func (c *ServiceConfig) AuthConfig() (Auth, error) {
+	if c.Auth == nil {
+		return Auth{}, fmt.Errorf("Auth config is mandatory")
+	}
+
+	return *c.Auth, nil
 }
