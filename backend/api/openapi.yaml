@@ -1,0 +1,62 @@
+openapi: 3.0.0
+info:
+  title: Task API
+  description: API for creating, updating, and deleting tasks
+  version: 1.0.0
+paths:
+  /tasks:
+    post:
+      summary: Create a new task
+      operationId: createTask
+      requestBody:
+        description: Task object to create
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        '201':
+          description: Task created successfully
+    put:
+      summary: Update an existing task
+      operationId: updateTask
+      requestBody:
+        description: Task object to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        '200':
+          description: Task updated successfully
+  /tasks/{id}:
+    delete:
+      summary: Delete a task
+      operationId: deleteTask
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Task ID to delete
+      responses:
+        '204':
+          description: Task deleted successfully
+
+components:
+  schemas:
+    Task:
+      type: object
+      properties:
+        title:
+          type: string
+        status:
+          type: string
+          enum: [complete, incomplete, in-progress]
+        content:
+          type: string
+
+
