@@ -22,20 +22,23 @@ func NewTaskHandler() http.Handler {
 	return generated.Handler(taskHandler)
 }
 
+func (h *TaskHandler) ListTasks(w http.ResponseWriter, r *http.Request, params generated.ListTasksParams) {
+	log.Printf("ListTasks called, params: %v\n", params)
+}
+
 func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
-	// Add logic for creating a task (e.g., save to database)
 	log.Println("CreateTask called")
-	return
 }
 
 func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	// Add logic for updating a task
 	log.Println("UpdateTask called")
-	return
 }
 
 func (h *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request, id string) {
-	// Add logic for deleting a task (e.g., delete from database)
 	log.Println("DeleteTask called for ID:", id)
-	return
+}
+
+func (h *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request, id string) {
+	log.Println("GetTask called for ID:", id)
 }

@@ -20,6 +20,15 @@ type Task struct {
 // TaskStatus defines model for Task.Status.
 type TaskStatus string
 
+// ListTasksParams defines parameters for ListTasks.
+type ListTasksParams struct {
+	// Limit Maximum number of tasks to return
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Cursor Cursor (ID of the last task from the previous page)
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+}
+
 // CreateTaskJSONRequestBody defines body for CreateTask for application/json ContentType.
 type CreateTaskJSONRequestBody = Task
 

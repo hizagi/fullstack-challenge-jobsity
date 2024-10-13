@@ -13,6 +13,9 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// List tasks with keyset pagination
+	// (GET /tasks)
+	ListTasks(w http.ResponseWriter, r *http.Request, params ListTasksParams)
 	// Create a new task
 	// (POST /tasks)
 	CreateTask(w http.ResponseWriter, r *http.Request)
@@ -22,11 +25,20 @@ type ServerInterface interface {
 	// Delete a task
 	// (DELETE /tasks/{id})
 	DeleteTask(w http.ResponseWriter, r *http.Request, id string)
+	// Get a task by ID
+	// (GET /tasks/{id})
+	GetTask(w http.ResponseWriter, r *http.Request, id string)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
+
+// List tasks with keyset pagination
+// (GET /tasks)
+func (_ Unimplemented) ListTasks(w http.ResponseWriter, r *http.Request, params ListTasksParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
 
 // Create a new task
 // (POST /tasks)
@@ -46,6 +58,12 @@ func (_ Unimplemented) DeleteTask(w http.ResponseWriter, r *http.Request, id str
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Get a task by ID
+// (GET /tasks/{id})
+func (_ Unimplemented) GetTask(w http.ResponseWriter, r *http.Request, id string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
@@ -54,6 +72,41 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// ListTasks operation middleware
+func (siw *ServerInterfaceWrapper) ListTasks(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListTasksParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "cursor", r.URL.Query(), &params.Cursor)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTasks(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // CreateTask operation middleware
 func (siw *ServerInterfaceWrapper) CreateTask(w http.ResponseWriter, r *http.Request) {
@@ -99,6 +152,31 @@ func (siw *ServerInterfaceWrapper) DeleteTask(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteTask(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTask operation middleware
+func (siw *ServerInterfaceWrapper) GetTask(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTask(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -222,6 +300,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/tasks", wrapper.ListTasks)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/tasks", wrapper.CreateTask)
 	})
 	r.Group(func(r chi.Router) {
@@ -229,6 +310,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/tasks/{id}", wrapper.DeleteTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/tasks/{id}", wrapper.GetTask)
 	})
 
 	return r
