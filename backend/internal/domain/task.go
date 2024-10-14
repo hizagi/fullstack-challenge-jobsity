@@ -16,6 +16,6 @@ func ValidateUpdateTask(updateTask *generated.UpdateTask) error {
 	return validation.ValidateStruct(
 		updateTask,
 		validation.Field(&updateTask.Title, validation.Required.Error("Title is required")),
-		validation.Field(&updateTask.Status, validation.Required.Error("Status is required"), validation.In(generated.TaskStatusComplete, generated.TaskStatusIncomplete, generated.TaskStatusInProgress).Error("Invalid status")),
+		validation.Field(&updateTask.Status, validation.Required.Error("Status is required"), validation.In(generated.UpdateTaskStatusComplete, generated.UpdateTaskStatusIncomplete, generated.UpdateTaskStatusInProgress).Error("Invalid status")),
 	)
 }

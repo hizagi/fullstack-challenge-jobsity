@@ -1,4 +1,6 @@
-package http
+//go:generate mockgen -source=task.go -destination=task_mocks.go -package=handler -mock_names=taskService=MockTaskService
+
+package handler
 
 import (
 	"context"

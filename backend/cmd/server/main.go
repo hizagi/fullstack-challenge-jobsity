@@ -12,7 +12,8 @@ import (
 
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/config"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/domain"
-	internalhttp "github.com/hizagi/fullstack-challenge-jobsity/backend/internal/http"
+	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/httpserver/handler"
+	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/httpserver/middleware"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/service"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/storage"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/storage/repository"
@@ -49,9 +50,9 @@ func main() {
 
 	taskService := service.NewTaskService(taskRepository, domain.TimeNow(time.Now().UTC))
 
-	authMiddleware := internalhttp.APIKeyAuthMiddleware(authConfig.APIKey)
+	authMiddleware := middleware.APIKeyAuthMiddleware(authConfig.APIKey)
 
-	httpHandler := internalhttp.NewTaskHandler(taskService, authMiddleware)
+	httpHandler := handler.NewTaskHandler(taskService, authMiddleware)
 
 	srv := &http.Server{
 		ReadTimeout:  httpServerConfig.ReadTimeout,
