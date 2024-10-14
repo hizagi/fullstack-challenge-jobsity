@@ -12,14 +12,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const taskCollection = "tasks"
+const TaskCollection = "tasks"
 
 type TaskRepository struct {
 	mongoCollection *mongo.Collection
 }
 
 func NewTaskRepository(mongoStorage *storage.MongoStorage) *TaskRepository {
-	return &TaskRepository{mongoCollection: mongoStorage.GetDatabase().Collection(taskCollection)}
+	return &TaskRepository{mongoCollection: mongoStorage.GetDatabase().Collection(TaskCollection)}
 }
 
 func (r *TaskRepository) CreateTask(ctx context.Context, task model.Task) (string, error) {
@@ -35,18 +35,18 @@ func (r *TaskRepository) CreateTask(ctx context.Context, task model.Task) (strin
 	return "", fmt.Errorf("unable to convert inserted ID: %v", result.InsertedID)
 }
 
-func (r *TaskRepository) UpdateTask(ctx context.Context, id string, setMap primitive.M) error {
+func (r *TaskRepository) UpdateTask(ctx context.Context, id string, setMap bson.M) error {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return fmt.Errorf("invalid objectid: %w", err)
 	}
 
-	result, err := r.mongoCollection.UpdateByID(ctx, objectID, setMap)
+	result, err := r.mongoCollection.UpdateByID(ctx, objectID, bson.M{"$set": setMap})
 	if err != nil {
 		return err
 	}
 
-	if result.UpsertedCount == 1 {
+	if result.ModifiedCount == 1 {
 		return nil
 	}
 

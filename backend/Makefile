@@ -44,4 +44,13 @@ clean-container:
 	@echo "Removing containers, and volumes..."
 	docker-compose down -v
 
-.PHONY: run lint build docker-build docker-run clean-spec install generate install-and-generate clean-install-generate up down logs clean-container
+unit-test:
+	go test -v -short $(go list ./...)
+
+integration-test:
+	go test -v -tags=integration $(go list ./...)
+
+all-test:
+	go test -v $(go list ./...)
+
+.PHONY: run lint build docker-build docker-run clean-spec install generate install-and-generate clean-install-generate up down logs clean-container unit-test integration-test all-test

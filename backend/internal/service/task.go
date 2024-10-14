@@ -53,9 +53,7 @@ func (s *TaskService) UpdateTask(ctx context.Context, id string, updateTask gene
 	}
 	update["updateAt"] = time.Now()
 
-	setMap := map[string]interface{}{"$set": update}
-
-	return s.taskRepository.UpdateTask(ctx, id, setMap)
+	return s.taskRepository.UpdateTask(ctx, id, update)
 }
 
 func (s *TaskService) DeleteTask(ctx context.Context, id string) error {
