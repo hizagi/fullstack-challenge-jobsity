@@ -10,7 +10,7 @@ func APIKeyAuthMiddleware(APIKey string) func(http.Handler) http.Handler {
 			apiKey := r.Header.Get("Authorization")
 
 			if apiKey == "" || apiKey != APIKey {
-				http.Error(w, "", http.StatusUnauthorized)
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
 			}
 

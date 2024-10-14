@@ -8,16 +8,15 @@ lint:
 	golangci-lint run
 
 build:
-	go build -o myapp
+	go build -o taskapp
 
 docker-build:
-	docker build -t myapp .
+	docker build -t taskapp .
 
 docker-run:
-	docker run -p 8080:8080 myapp
+	docker run -p 8080:8080 taskapp
 
 clean-spec:
-	@echo "Cleaning generated files..."
 	rm -rf $(GENERATED_DIR)
 
 generate:
@@ -45,12 +44,24 @@ clean-container:
 	docker-compose down -v
 
 unit-test:
-	go test -v -short $(go list ./...)
+	go fmt ./...
+	go test -vet all ./...
 
 integration-test:
-	go test -v -tags=integration $(go list ./...)
+	go test -v -vet all -tags=integration ./...
 
-all-test:
-	go test -v $(go list ./...)
+race-test:
+	go test -v -race ./...
 
-.PHONY: run lint build docker-build docker-run clean-spec install generate install-and-generate clean-install-generate up down logs clean-container unit-test integration-test all-test
+test: unit-test integration-test race-test
+
+get-mocks-generator:
+	go install -mod=mod go.uber.org/mock/mockgen
+
+generate-mocks: get-mocks-generator
+	go generate -v ./...
+
+clean-mocks:
+	find . -type f -name '*_mocks.go' -exec rm -f {} \;
+
+.PHONY: run lint build docker-build docker-run clean-spec install generate install-and-generate clean-install-generate up down logs clean-container unit-test integration-test race-test test get-mocks-generator generate-mocks clean-mocks

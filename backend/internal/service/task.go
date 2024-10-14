@@ -1,10 +1,12 @@
+//go:generate mockgen -source=task.go -destination=task_mocks.go -package=service -mock_names=taskRepository=MockTaskRepository
+
 package service
 
 import (
 	"context"
-	"time"
 
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/api/generated"
+	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/domain"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/storage/model"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -21,10 +23,11 @@ type taskRepository interface {
 
 type TaskService struct {
 	taskRepository taskRepository
+	timeProvider   domain.TimeProvider
 }
 
-func NewTaskService(taskRepository taskRepository) *TaskService {
-	return &TaskService{taskRepository: taskRepository}
+func NewTaskService(taskRepository taskRepository, timeProvider domain.TimeProvider) *TaskService {
+	return &TaskService{taskRepository: taskRepository, timeProvider: timeProvider}
 }
 
 func (s *TaskService) CreateTask(ctx context.Context, createTask generated.CreateTask) (string, error) {
@@ -32,8 +35,8 @@ func (s *TaskService) CreateTask(ctx context.Context, createTask generated.Creat
 		Title:     createTask.Title,
 		Content:   createTask.Content,
 		Status:    string(generated.TaskStatusIncomplete),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: s.timeProvider.Now(),
+		UpdatedAt: s.timeProvider.Now(),
 	}
 
 	return s.taskRepository.CreateTask(ctx, newTask)
@@ -51,7 +54,7 @@ func (s *TaskService) UpdateTask(ctx context.Context, id string, updateTask gene
 	if updateTask.Status != nil {
 		update["status"] = *updateTask.Status
 	}
-	update["updateAt"] = time.Now()
+	update["updatedAt"] = s.timeProvider.Now()
 
 	return s.taskRepository.UpdateTask(ctx, id, update)
 }

@@ -8,8 +8,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/config"
+	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/domain"
 	internalhttp "github.com/hizagi/fullstack-challenge-jobsity/backend/internal/http"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/service"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/storage"
@@ -45,7 +47,7 @@ func main() {
 
 	taskRepository := repository.NewTaskRepository(mongoStorage)
 
-	taskService := service.NewTaskService(taskRepository)
+	taskService := service.NewTaskService(taskRepository, domain.TimeNow(time.Now().UTC))
 
 	authMiddleware := internalhttp.APIKeyAuthMiddleware(authConfig.APIKey)
 
