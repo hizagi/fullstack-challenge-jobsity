@@ -1,1 +1,30 @@
-<p>task-list works!</p>
+<div class="task-list">
+    <h2>Task List</h2>
+  
+    <ul class="list-group">
+      <li
+        *ngFor="let task of tasks"
+        class="list-group-item"
+        (mouseover)="showActions(task.id)"
+        (mouseleave)="hideActions(task.id)"
+      >
+        <span>{{ task.title }}</span>
+        <span class="badge badge-primary">{{ task.status }}</span>
+  
+        <div *ngIf="task.showActions" class="task-actions">
+          <button class="btn btn-primary btn-sm" (click)="editTask(task)">Edit</button>
+          <button class="btn btn-danger btn-sm" (click)="confirmDeleteTask(task.id)">Delete</button>
+        </div>
+      </li>
+    </ul>
+  
+    <!-- Delete Confirmation Modal -->
+    <div *ngIf="showDeleteModal" class="modal">
+      <div class="modal-content">
+        <h3>Are you sure you want to delete this task?</h3>
+        <button class="btn btn-danger" (click)="deleteTask()">Yes</button>
+        <button class="btn btn-secondary" (click)="cancelDelete()">No</button>
+      </div>
+    </div>
+  </div>
+  
