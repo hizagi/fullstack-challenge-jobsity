@@ -1,0 +1,157 @@
+openapi: 3.0.0
+info:
+  title: Task API
+  description: API for creating, updating, and deleting tasks
+  version: 1.0.0
+paths:
+  /tasks:
+    get:
+      summary: List tasks with keyset pagination
+      operationId: listTasks
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of tasks to return
+          schema:
+            type: integer
+            x-go-type: int64
+        - name: cursor
+          in: query
+          required: false
+          description: Cursor (ID of the last task from the previous page)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A list of tasks and the next cursor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListTasksResponse"
+
+    post:
+      summary: Create a new task
+      operationId: createTask
+      requestBody:
+        description: Task object to create
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTask"
+      responses:
+        "201":
+          description: Task created successfully
+  /tasks/{id}:
+    get:
+      summary: Get a task by ID
+      operationId: getTask
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the task to retrieve
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The task with the given ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Task not found
+    patch:
+      summary: Update an existing task
+      operationId: updateTask
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the task to update
+          schema:
+            type: string
+      requestBody:
+        description: Task object to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTask"
+      responses:
+        "204":
+          description: Task updated successfully
+    delete:
+      summary: Delete a task
+      operationId: deleteTask
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Task ID to delete
+      responses:
+        "204":
+          description: Task deleted successfully
+
+components:
+  schemas:
+    CreateTask:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          x-go-type-skip-optional-pointer: true
+          type: string
+      required:
+        - title
+    UpdateTask:
+      type: object
+      properties:
+        title:
+          type: string
+        status:
+          type: string
+          enum: [complete, incomplete, in-progress]
+        content:
+          type: string
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the task
+          example: "60c5f6e8d7f68839db5fa423"
+          x-go-name: ID
+        title:
+          type: string
+        status:
+          type: string
+          enum: [complete, incomplete, in-progress]
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          description: Task creation time
+        updatedAt:
+          type: string
+          format: date-time
+          description: Task update time
+    ListTasksResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+        nextCursor:
+          type: string
+          description: Cursor for the next page of tasks
+      required:
+        - tasks
+        - nextCursor

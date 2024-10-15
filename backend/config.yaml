@@ -1,0 +1,16 @@
+server:
+  port: 8080
+  readTimeout: 10s
+  writeTimeout: 10s
+  idleTimeout: 60s
+
+db:
+  uri: "mongodb://localhost:27017"
+  user: "localuser"
+  password: "localpassword"
+  database: "tasks_db"
+  timeout: 10s
+  maxPoolSize: 100
+
+auth:
+  apiKey: 1234567891011

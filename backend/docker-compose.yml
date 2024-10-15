@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo_tasks
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: localuser
+      MONGO_INITDB_ROOT_PASSWORD: localpassword
+    volumes:
+      - mongo_data:/data/db # Persist MongoDB data to a volume
+
+volumes:
+  mongo_data:
+    driver: local
