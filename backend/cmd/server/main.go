@@ -48,7 +48,7 @@ func main() {
 
 	taskRepository := repository.NewTaskRepository(mongoStorage)
 
-	taskService := service.NewTaskService(taskRepository, domain.TimeNow(time.Now().UTC))
+	taskService := service.NewTaskService(taskRepository, domain.TimeNow(time.Now))
 
 	authMiddleware := middleware.APIKeyAuthMiddleware(authConfig.APIKey)
 

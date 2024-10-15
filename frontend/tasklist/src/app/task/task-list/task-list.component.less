@@ -1,50 +1,60 @@
 .list-group-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
-  
-    &:hover .task-actions {
-      display: inline-block;
-    }
-  
-    .task-actions {
-      display: none;
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-  
-      button {
-        margin-left: 5px;
-      }
-    }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+
+  &:hover .task-actions {
+    display: inline-block;
   }
-  
-  .badge {
-    margin-left: 10px;
-  }
-  
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  
-    .modal-content {
-      background-color: white;
-      padding: 20px;
-      border-radius: 5px;
-      text-align: center;
-  
-      button {
-        margin: 10px;
-      }
+
+  .task-actions {
+    display: none;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    button {
+      margin-left: 5px;
     }
   }
-  
+}
+
+.badge {
+  margin-left: 10px;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+
+    .form-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+    }
+
+    button {
+      margin: 10px;
+    }
+  }
+}

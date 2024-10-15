@@ -54,7 +54,7 @@ func (s *TaskService) UpdateTask(ctx context.Context, id string, updateTask gene
 	if updateTask.Status != nil {
 		update["status"] = *updateTask.Status
 	}
-	update["updatedAt"] = s.timeProvider.Now()
+	update["updated_at"] = s.timeProvider.Now()
 
 	return s.taskRepository.UpdateTask(ctx, id, update)
 }
