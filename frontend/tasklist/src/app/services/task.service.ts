@@ -17,7 +17,7 @@ export class TaskService {
     });
 
     let params = new HttpParams().set('limit', limit);
-    params = params.set('cursor', '');
+    params = params.set('cursor', cursor);
     
 
     return this.http.get<GetTasksResponse>(this.apiUrl, { headers, params }).pipe(

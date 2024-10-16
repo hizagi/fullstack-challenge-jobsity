@@ -25,25 +25,50 @@ export class TaskListComponent implements OnInit {
     status: 'incomplete',
     showActions: false,
   }
+  nextCursor: string | null = null
+  limit: number = 10
+  isLoading: boolean = false
+  hasMoreTasks: boolean = true
 
   constructor(private taskService: TaskService) {}
 
   ngOnInit(): void {
-    this.getTasks()
+    this.loadTasks()
   }
 
-  getTasks(): void {
-    this.taskService.getTasks().subscribe({
+  resetAndLoad(): void {
+    this.nextCursor = ''
+    this.tasks = []
+    this.loadTasks()
+  }
+
+  loadTasks(): void {
+    if (this.isLoading) {
+      return
+    }
+
+    this.isLoading = true
+
+    this.taskService.getTasks(this.nextCursor || '', this.limit).subscribe({
       next: (response) => {
-        this.tasks = response.tasks.map((task) => ({
-          ...task,
-          showActions: false,
-        }))
+        if (response.tasks?.length > 0) {
+          this.tasks = [...this.tasks, ...response.tasks]
+        }
+
+        this.nextCursor = response.nextCursor || null
+        this.hasMoreTasks = !!response.nextCursor
+
+        this.isLoading = false
       },
       error: (err) => {
         console.error('Error fetching tasks:', err)
+        this.isLoading = false
       },
     })
+  }
+
+  loadMoreTasks(): void {
+    this.loadTasks()
   }
 
   showActions(id: number): void {
@@ -85,7 +110,7 @@ export class TaskListComponent implements OnInit {
   createTask(): void {
     this.taskService.createTask(this.newTask).subscribe({
       next: () => {
-        this.getTasks()
+        this.resetAndLoad()
         this.cancelCreate()
       },
       error: (err) => {
@@ -108,7 +133,7 @@ export class TaskListComponent implements OnInit {
     if (this.taskToDeleteId !== null) {
       this.taskService.deleteTask(this.taskToDeleteId).subscribe({
         next: () => {
-          this.getTasks()
+          this.resetAndLoad()
           this.cancelDelete()
         },
         error: (err) => {
@@ -132,7 +157,7 @@ export class TaskListComponent implements OnInit {
     if (this.selectedTask) {
       this.taskService.updateTask(this.selectedTask).subscribe({
         next: () => {
-          this.getTasks()
+          this.resetAndLoad()
           this.cancelEdit()
         },
         error: (err) => {
@@ -140,5 +165,10 @@ export class TaskListComponent implements OnInit {
         },
       })
     }
+  }
+
+  onLimitChange(newLimit: number): void {
+    this.limit = newLimit
+    this.resetAndLoad()
   }
 }

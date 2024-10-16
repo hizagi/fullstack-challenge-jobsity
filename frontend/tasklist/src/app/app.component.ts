@@ -1,15 +1,14 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { TaskListComponent } from './task/task-list/task-list.component';
-import { TaskDetailComponent } from './task/task-detail/task-detail.component';
+import { Component } from '@angular/core'
+import { RouterOutlet } from '@angular/router'
+import { TaskListComponent } from './task/task-list/task-list.component'
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, TaskListComponent, TaskDetailComponent],
+  imports: [RouterOutlet, TaskListComponent],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.less'
+  styleUrl: './app.component.less',
 })
 export class AppComponent {
-  title = 'tasklist';
+  title = 'tasklist'
 }
