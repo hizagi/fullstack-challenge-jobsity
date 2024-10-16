@@ -81,8 +81,8 @@ func TestTaskService(t *testing.T) {
 		taskID := "6526d630bac500ba72368e32"
 
 		updateMap := map[string]interface{}{
-			"title":     testTitle,
-			"updatedAt": defaultDate,
+			"title":      testTitle,
+			"updated_at": defaultDate,
 		}
 
 		mockTimeProvider.EXPECT().Now().Return(defaultDate).Times(1)
@@ -101,9 +101,9 @@ func TestTaskService(t *testing.T) {
 		taskID := "6526d630bac500ba72368e32"
 
 		updateMap := map[string]interface{}{
-			"title":     testTitle,
-			"status":    testInProgressStatus,
-			"updatedAt": defaultDate,
+			"title":      testTitle,
+			"status":     testInProgressStatus,
+			"updated_at": defaultDate,
 		}
 
 		mockTimeProvider.EXPECT().Now().Return(defaultDate).Times(1)
@@ -122,9 +122,9 @@ func TestTaskService(t *testing.T) {
 		taskID := "6526d630bac500ba72368e32"
 
 		updateMap := map[string]interface{}{
-			"title":     testTitle,
-			"status":    testInProgressStatus,
-			"updatedAt": defaultDate,
+			"title":      testTitle,
+			"status":     testInProgressStatus,
+			"updated_at": defaultDate,
 		}
 
 		mockTimeProvider.EXPECT().Now().Return(defaultDate).Times(1)

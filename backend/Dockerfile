@@ -1,5 +1,5 @@
 # Stage 1: Build Phase
-FROM golang:1.23.2-alpine:3.20 AS builder
+FROM golang:1.23.2 AS builder
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -22,6 +22,7 @@ WORKDIR /app
 
 # Copy the binary from the builder stage
 COPY --from=builder /app/tasklist .
+COPY --from=builder /app/config.yaml .
 
 # Expose port 8080
 EXPOSE 8080

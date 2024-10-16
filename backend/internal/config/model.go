@@ -29,7 +29,7 @@ type DB struct {
 	URI         string        `koanf:"uri"`
 	User        string        `koanf:"user"`
 	Password    string        `koanf:"password"`
-	Database    string        `koanf:"database"`
+	Name        string        `koanf:"name"`
 	Timeout     time.Duration `koanf:"timeout"`
 	MaxPoolSize uint64        `koanf:"maxPoolSize"`
 }

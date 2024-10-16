@@ -11,6 +11,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/api/generated"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/domain"
 )
@@ -31,6 +33,18 @@ func NewTaskHandler(taskService taskService, middlewares ...func(http.Handler) h
 	r := chi.NewRouter()
 
 	middlewares = append(middlewares, middleware.Recoverer)
+
+	corsOptions := cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:4200"},
+		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	})
+
+	// Add the CORS middleware to the router
+	r.Use(corsOptions)
 
 	r.Use(middlewares...)
 
@@ -67,7 +81,7 @@ func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := domain.ValidateCreateTask(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		jsonErrorResponse(w, err)
 		return
 	}
 
@@ -90,13 +104,13 @@ func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request, id stri
 	}
 
 	if err := domain.ValidateUpdateTask(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		jsonErrorResponse(w, err)
 		return
 	}
 
 	err := h.taskService.UpdateTask(r.Context(), id, req)
 	if err != nil {
-		log.Printf("Error creating task: %v", err)
+		log.Printf("Error updating task: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -107,7 +121,7 @@ func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request, id stri
 func (h *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request, id string) {
 	err := h.taskService.DeleteTask(r.Context(), id)
 	if err != nil {
-		log.Printf("Error creating task: %v", err)
+		log.Printf("Error deleting task: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -118,7 +132,7 @@ func (h *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request, id stri
 func (h *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request, id string) {
 	task, err := h.taskService.GetTask(r.Context(), id)
 	if err != nil {
-		log.Printf("Error creating task: %v", err)
+		log.Printf("Error fetching task: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -126,4 +140,23 @@ func (h *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request, id string)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(task)
+}
+
+func jsonErrorResponse(w http.ResponseWriter, err error) {
+	w.Header().Set("Content-Type", "application/json")
+
+	statusCode := http.StatusInternalServerError
+	body := make(map[string]interface{})
+	// Switch to handle different error types
+	switch err := err.(type) {
+	case validation.Errors:
+		statusCode = http.StatusBadRequest
+		body["error"] = err
+
+	default:
+		body["error"] = "Internal Error, please contact an administrator."
+	}
+
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(body)
 }

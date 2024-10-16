@@ -2,7 +2,7 @@ GENERATED_DIR := api/generated
 OPENAPI_SPEC := api/openapi.yaml
 
 run:
-	go run main.go
+	go run cmd/server/main.go
 
 lint:
 	golangci-lint run

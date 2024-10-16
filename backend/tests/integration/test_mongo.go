@@ -50,7 +50,7 @@ func StartMongoContainer() (*config.DB, func(context.Context), error) {
 		URI:         mongoURI,
 		User:        "", // No authentication for local test setup
 		Password:    "", // No authentication for local test setup
-		Database:    "testdb",
+		Name:        "testdb",
 		Timeout:     10 * time.Second,
 		MaxPoolSize: 100,
 	}

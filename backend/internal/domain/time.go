@@ -11,5 +11,5 @@ type TimeProvider interface {
 type TimeNow func() time.Time
 
 func (tn TimeNow) Now() time.Time {
-	return tn()
+	return tn().UTC()
 }

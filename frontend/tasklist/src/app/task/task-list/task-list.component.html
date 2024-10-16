@@ -1,0 +1,163 @@
+<div class="task-list">
+  <h2>Task List</h2>
+
+  <div class="form-group">
+    <label for="limit">Tasks per page:</label>
+    <select
+      id="limit"
+      class="form-control"
+      [(ngModel)]="limit"
+      (change)="onLimitChange(limit)"
+    >
+      <option [value]="5">5</option>
+      <option [value]="10">10</option>
+      <option [value]="15">15</option>
+    </select>
+  </div>
+
+  <button id="newTaskBtn" (click)="openCreateModal()">Create New Task</button>
+
+  <ul class="list-group" *ngIf="tasks.length > 0">
+    <li
+      *ngFor="let task of tasks"
+      class="list-group-item"
+      (mouseover)="showActions(task.id)"
+      (mouseleave)="hideActions(task.id)"
+    >
+      <span>{{ task.title }}</span>
+      <span
+        class="badge"
+        [ngClass]="{
+          'badge-complete': task.status === 'complete',
+          'badge-in-progress': task.status === 'in-progress',
+          'badge-incomplete': task.status === 'incomplete',
+        }"
+        >{{ task.status }}</span
+      >
+
+      <div *ngIf="task.showActions" class="task-actions">
+        <button class="btn btn-primary btn-sm" (click)="openEditModal(task)">
+          Edit
+        </button>
+        <button
+          class="btn btn-danger btn-sm"
+          (click)="confirmDeleteTask(task.id)"
+        >
+          Delete
+        </button>
+      </div>
+    </li>
+  </ul>
+
+  <button
+    class="btn btn-primary"
+    *ngIf="hasMoreTasks"
+    (click)="loadMoreTasks()"
+    [disabled]="isLoading"
+  >
+    {{ isLoading ? 'Loading...' : 'Load More' }}
+  </button>
+
+  <!-- Show message when there are no tasks -->
+  <p *ngIf="tasks.length === 0 && !isLoading">No tasks available</p>
+
+  <!-- Create Task Modal -->
+  <div *ngIf="showCreateModal" class="modal">
+    <div class="modal-content">
+      <h3>Create New Task</h3>
+      <form (ngSubmit)="createTask()">
+        <div class="form-group">
+          <label for="newTitle">Title</label>
+          <input
+            type="text"
+            id="newTitle"
+            [(ngModel)]="newTask.title"
+            name="newTitle"
+            class="form-control"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="newContent">Content</label>
+          <textarea
+            id="newContent"
+            [(ngModel)]="newTask.content"
+            name="newContent"
+            class="form-control"
+            required
+          ></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-success">Create Task</button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="cancelCreate()"
+        >
+          Cancel
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div *ngIf="showDeleteModal" class="modal">
+    <div class="modal-content">
+      <h3>Are you sure you want to delete this task?</h3>
+      <button class="btn btn-danger" (click)="deleteTask()">Yes</button>
+      <button class="btn btn-secondary" (click)="cancelDelete()">No</button>
+    </div>
+  </div>
+
+  <!-- Edit Task Modal -->
+  <div *ngIf="showEditModal && selectedTask" class="modal">
+    <div class="modal-content">
+      <h3>Edit Task</h3>
+      <form (ngSubmit)="updateTask()">
+        <div class="form-group">
+          <label for="title">Title</label>
+          <input
+            type="text"
+            id="title"
+            [(ngModel)]="selectedTask.title"
+            name="title"
+            class="form-control"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="content">Content</label>
+          <textarea
+            id="content"
+            [(ngModel)]="selectedTask.content"
+            name="content"
+            class="form-control"
+            required
+          ></textarea>
+        </div>
+        <div class="form-group">
+          <label for="status">Status</label>
+          <select
+            id="status"
+            [(ngModel)]="selectedTask.status"
+            name="status"
+            class="form-control"
+          >
+            <option value="incomplete">Incomplete</option>
+            <option value="in-progress">In Progress</option>
+            <option value="complete">Complete</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <button type="button" class="btn btn-secondary" (click)="cancelEdit()">
+          Cancel
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<ng-template #noTasks>
+  <p>No tasks available</p>
+</ng-template>
