@@ -29,8 +29,6 @@ func main() {
 		log.Fatalf("failure loading configuration: %s", err)
 	}
 
-	log.Printf("Config loaded: %+v \n", serviceConfig.Auth)
-
 	httpServerConfig := serviceConfig.HTTPServerConfig()
 
 	dbConfig, err := serviceConfig.DBConfig()
