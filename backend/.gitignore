@@ -34,9 +34,6 @@ Thumbs.db
 *.tmp
 *.swp
 
-# Go module files
-go.sum
-
 # Go build artifacts
 bin/
 pkg/
