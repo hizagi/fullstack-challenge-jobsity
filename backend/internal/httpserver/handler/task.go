@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/api/generated"
 	"github.com/hizagi/fullstack-challenge-jobsity/backend/internal/domain"
 )
@@ -34,18 +35,12 @@ func NewTaskHandler(taskService taskService, middlewares ...func(http.Handler) h
 	middlewares = append(middlewares, middleware.Recoverer)
 
 	corsOptions := cors.Handler(cors.Options{
-		// Specify the origins allowed to make cross-origin requests
-		AllowedOrigins: []string{"http://localhost:4200"},
-		// Allow specific methods (GET, POST, etc.)
-		AllowedMethods: []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
-		// Allow specific headers
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		// Expose specific headers to the browser
-		ExposedHeaders: []string{"Link"},
-		// Allow credentials like cookies
+		AllowedOrigins:   []string{"http://localhost:4200"},
+		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
-		// Preflight request max age
-		MaxAge: 300,
+		MaxAge:           300,
 	})
 
 	// Add the CORS middleware to the router
@@ -86,7 +81,7 @@ func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := domain.ValidateCreateTask(&req); err != nil {
-		jsonErrorResponse(w, err, http.StatusBadRequest)
+		jsonErrorResponse(w, err)
 		return
 	}
 
@@ -109,7 +104,7 @@ func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request, id stri
 	}
 
 	if err := domain.ValidateUpdateTask(&req); err != nil {
-		jsonErrorResponse(w, err, http.StatusBadRequest)
+		jsonErrorResponse(w, err)
 		return
 	}
 
@@ -147,9 +142,21 @@ func (h *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request, id string)
 	json.NewEncoder(w).Encode(task)
 }
 
-func jsonErrorResponse(w http.ResponseWriter, body interface{}, statusCode int) {
+func jsonErrorResponse(w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
 
+	statusCode := http.StatusInternalServerError
+	body := make(map[string]interface{})
+	// Switch to handle different error types
+	switch err := err.(type) {
+	case validation.Errors:
+		statusCode = http.StatusBadRequest
+		body["error"] = err
+
+	default:
+		body["error"] = "Internal Error, please contact an administrator."
+	}
+
+	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(body)
 }

@@ -15,7 +15,7 @@ func ValidateCreateTask(createTask *generated.CreateTask) error {
 func ValidateUpdateTask(updateTask *generated.UpdateTask) error {
 	return validation.ValidateStruct(
 		updateTask,
-		validation.Field(&updateTask.Title, validation.NilOrNotEmpty.Error("Title should not be empty")),
+		validation.Field(&updateTask.Title, validation.NilOrNotEmpty.Error("should not be empty")),
 		validation.Field(&updateTask.Status,
 			validation.When(updateTask.Status != nil, validation.In(generated.UpdateTaskStatusComplete, generated.UpdateTaskStatusInProgress, generated.UpdateTaskStatusIncomplete)).Else(validation.Nil)),
 	)
