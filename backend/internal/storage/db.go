@@ -10,10 +10,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-const database = "taskDatabase"
-
 type MongoStorage struct {
 	client *mongo.Client
+	dbName string
 }
 
 func NewMongoStorage(ctx context.Context, dbConfig config.DB) (*MongoStorage, error) {
@@ -42,11 +41,12 @@ func NewMongoStorage(ctx context.Context, dbConfig config.DB) (*MongoStorage, er
 
 	return &MongoStorage{
 		client: client,
+		dbName: dbConfig.Name,
 	}, nil
 }
 
 func (m *MongoStorage) GetDatabase() *mongo.Database {
-	return m.client.Database(database)
+	return m.client.Database(m.dbName)
 }
 
 func (m *MongoStorage) Disconnect(ctx context.Context) error {
